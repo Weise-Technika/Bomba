@@ -16,7 +16,7 @@ async function scrape() {
   let failedAttempts = 0; 
   const failedPages = []; 
   const outputPath = path.join(__dirname, '..', 'data', 'one2carData.json'); 
-  const maxCars = 100; 
+  const maxCars = 200; 
   let carCount = 0; 
 
   // สร้างไดเรกทอรี data หากไม่มีอยู่
@@ -188,8 +188,7 @@ async function scrape() {
 
     await browser.close();
 
-    console.log(`\none2carดึงข้อมูลเสร็จสิ้น ข้อมูลรถทั้งหมดจาก ${currentPage - 1} หน้า`);
-    console.log(`จำนวนรายการข้อมูลที่ดึงได้: ${carCount} รายการ`);
+    console.log(`\nดึงข้อมูลเสร็จสิ้น one2car ได้ข้อมูลรถ ${carCount} คัน`);    
     if (failedPages.length > 0) {
       console.log(`หน้าที่ดึงข้อมูลไม่ได้: ${failedPages.join(", ")}`);
     }

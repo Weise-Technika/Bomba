@@ -9,8 +9,20 @@ const __dirname = path.dirname(__filename);
 const prisma = new PrismaClient();
 
 async function uploadData() {
-  const filePath = path.join(__dirname, '..', 'data', 'one2carData.json');
-  const validateFilePath = path.join(__dirname, '..', 'data', 'validateOne2carData.json');
+  const one2carFilePath = path.join(__dirname, 'data', 'one2carData.json');
+  const taladrodFilePath = path.join(__dirname, 'data', 'taladrodData.json');
+  const validateFilePath = path.join(__dirname, 'data', 'validateOne2carData.json');
+
+  let filePath;
+
+  if (fs.existsSync(one2carFilePath)) {
+    filePath = one2carFilePath;
+  } else if (fs.existsSync(taladrodFilePath)) {
+    filePath = taladrodFilePath;
+  } else {
+    console.error('❌ ไม่พบไฟล์ one2carData.json หรือ taladrodData.json');
+    return;
+  }
 
   try {
     const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -33,10 +45,24 @@ async function uploadData() {
 
     // บันทึกข้อมูลลงฐานข้อมูล
     if (validData.length > 0) {
-      await prisma.temporaryData.createMany({
-        data: validData,
+      const existingData = await prisma.temporaryData.findMany({
+        where: {
+          rawData: {
+            in: validData.map(data => data.rawData)
+          }
+        }
       });
-      console.log(`⭕ บันทึกข้อมูล จำนวน ${validData.length} รายการ`);
+
+      const newData = validData.filter(data => !existingData.some(existing => existing.rawData === data.rawData));
+
+      if (newData.length > 0) {
+        await prisma.temporaryData.createMany({
+          data: newData,
+        });
+        console.log(`⭕ บันทึกข้อมูล จำนวน ${newData.length} รายการ`);
+      } else {
+        console.log('ไม่มีข้อมูลใหม่สำหรับการอัปโหลด');
+      }
     } else {
       console.log('ไม่มีข้อมูลที่สมบูรณ์สำหรับการอัปโหลด');
     }

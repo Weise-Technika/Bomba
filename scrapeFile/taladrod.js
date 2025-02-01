@@ -1,6 +1,11 @@
 import fs from "fs";
 import { PrismaClient } from "@prisma/client";
 import puppeteer from "puppeteer";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const prisma = new PrismaClient();
 
@@ -31,10 +36,14 @@ function delay(ms) {
   let retryCount = 0;
   let carCount = 0;
   let failedCids = [];
-  const maxCars = Infinity;
- 
-  const writeStream = fs.createWriteStream("carData.json", { flags: 'a' });
-  writeStream.write('['); 
+  const maxCars = 20; //Infinity
+
+  const dataDir = path.join(__dirname, '..', 'data'); // แก้ไขเส้นทางนี้
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir);
+  }
+  const writeStream = fs.createWriteStream(path.join(dataDir, "taladrodData.json"), { flags: 'a' });
+  writeStream.write('[');
 
   while (consecutiveSkippedCids < 10 && carCount < maxCars) {
     try {
@@ -116,19 +125,10 @@ function delay(ms) {
           date,
         };
       });
-
-      // เก็บข้อมูลเข้า DB
-      try {
-        await prisma.temporaryData.create({
-          data: carData,
-        });
-      } catch (error) {
-        console.error("\nError inserting data:", error);
-      }
-
+    
       // เขียนข้อมูลลงไฟล์ JSON
       if (carCount > 0) {
-        writeStream.write(','); 
+        writeStream.write(',');
       }
       writeStream.write(JSON.stringify(carData, null, 2));
 
@@ -140,12 +140,11 @@ function delay(ms) {
       retryCount = 0;
       cid--;
     } catch (error) {
-      
       retryCount++;
       if (retryCount >= 3) {
         skippedCids++;
         consecutiveSkippedCids++;
-        failedCids.push(cid); 
+        failedCids.push(cid);
         retryCount = 0;
         cid--;
       }
@@ -155,7 +154,7 @@ function delay(ms) {
     await delay(randomDelay);
   }
 
-  writeStream.write(']'); 
+  writeStream.write(']');
   writeStream.end();
 
   await browser.close();
