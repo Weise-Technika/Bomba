@@ -16,8 +16,6 @@ processOne2car.on('close', (code) => {
     // รันไฟล์ uploadOne2carData.js ต่อ
     const processUpload = spawn('node', [uploadScript], { stdio: 'inherit' });
 
-    // processUpload.on('close', (uploadCode) => {
-    //   console.log(`📂 กระบวนการ uploadOne2carData.js สิ้นสุดด้วยรหัส: ${uploadCode}`);
-    // });
+    
   }
 });

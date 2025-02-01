@@ -20,7 +20,10 @@ async function uploadData() {
     const invalidData = [];
 
     data.forEach(entry => {
-      const isValid = Object.values(entry).every(value => value !== null && value !== undefined);
+      const isValid = Object.entries(entry).every(([key, value]) => {
+        if (key === 'version') return true; // อนุญาตให้ 'version' เป็น null ได้
+        return value !== null && value !== undefined;
+      });
       if (isValid) {
         validData.push(entry);
       } else {
@@ -48,7 +51,7 @@ async function uploadData() {
       fs.writeFileSync(validateFilePath, JSON.stringify(updatedInvalidData, null, 2));
       console.log(`⛔ ข้อมูลที่รอการตรวจสอบ จำนวน ${invalidData.length} รายการ`);
     } else {
-      console.log('⛔ ไม่มีข้อมูลที่ไม่สมบูรณ์สำหรับการตรวจสอบ');
+      console.log('⛔ ไม่มีข้อมูลรอการตรวจสอบ');
     }
    
     fs.unlinkSync(filePath);    
