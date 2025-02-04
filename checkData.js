@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 async function uploadData() {
   const one2carFilePath = path.join(__dirname, 'data', 'one2carData.json');
   const taladrodFilePath = path.join(__dirname, 'data', 'taladrodData.json');
-  const validateFilePath = path.join(__dirname, 'data', 'validateOne2carData.json');
+  const validateFilePath = path.join(__dirname, 'data', 'validateData.json');
 
   let filePath;
 
@@ -33,7 +33,7 @@ async function uploadData() {
 
     data.forEach(entry => {
       const isValid = Object.entries(entry).every(([key, value]) => {
-        if (key === 'version') return true; // อนุญาตให้ 'version' เป็น null ได้
+        if (key === 'version') return true; 
         return value !== null && value !== undefined;
       });
       if (isValid) {
@@ -61,13 +61,13 @@ async function uploadData() {
         });
         console.log(`⭕ บันทึกข้อมูล จำนวน ${newData.length} รายการ`);
       } else {
-        console.log('ไม่มีข้อมูลใหม่สำหรับการอัปโหลด');
+        console.log('⭕ ไม่มีข้อมูลใหม่สำหรับการอัปโหลด');
       }
     } else {
       console.log('ไม่มีข้อมูลที่สมบูรณ์สำหรับการอัปโหลด');
     }
 
-    // บันทึกข้อมูลที่ไม่สมบูรณ์ลงไฟล์ validateOne2carData.json
+    // บันทึกข้อมูลที่ไม่สมบูรณ์ลงไฟล์ validatData.json
     if (invalidData.length > 0) {
       let existingInvalidData = [];
       if (fs.existsSync(validateFilePath)) {
@@ -75,9 +75,9 @@ async function uploadData() {
       }
       const updatedInvalidData = existingInvalidData.concat(invalidData);
       fs.writeFileSync(validateFilePath, JSON.stringify(updatedInvalidData, null, 2));
-      console.log(`⛔ ข้อมูลที่รอการตรวจสอบ จำนวน ${invalidData.length} รายการ`);
+      console.log(`❌ ข้อมูลที่รอการตรวจสอบ จำนวน ${invalidData.length} รายการ`);
     } else {
-      console.log('⛔ ไม่มีข้อมูลรอการตรวจสอบ');
+      console.log('⭕ ไม่มีข้อมูลรอการตรวจสอบ');
     }
    
     fs.unlinkSync(filePath);    

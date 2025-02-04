@@ -16,7 +16,7 @@ async function scrape() {
   let failedAttempts = 0; 
   const failedPages = []; 
   const outputPath = path.join(__dirname, '..', 'data', 'one2carData.json'); 
-  const maxCars = 200; 
+  const maxCars = 10000; 
   let carCount = 0; 
 
   // สร้างไดเรกทอรี data หากไม่มีอยู่
@@ -35,7 +35,7 @@ async function scrape() {
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
     );
 
-    const allData = []; // สำหรับเก็บข้อมูลทั้งหมด
+    const allData = []; 
 
     while (hasNextPage && carCount < maxCars) {
       const link = `${baseURL}?type=used&page_number=${currentPage}&page_size=26`;
@@ -139,9 +139,10 @@ async function scrape() {
             }
           }
 
-          let price =
-            article.querySelector(".listing__price")?.textContent?.trim() ||
-            null;
+          let priceElement = article.querySelector(".listing__price .weight--semibold") ||
+                             article.querySelector(".listing__price.delta.weight--bold") ||
+                             article.querySelector(".listing__price .hot-deal__price .weight--semibold");
+          let price = priceElement ? priceElement.textContent.trim() : null;
 
           if (price) {
             price = parseInt(price.replace(/[^0-9]/g, "")).toString();
@@ -149,6 +150,11 @@ async function scrape() {
 
           const location =
             article.querySelector(".item.push-quarter--ends .icon--location")?.parentElement?.textContent?.trim() || null;
+
+          let link = article.querySelector("a.listing__overlay")?.href || null;
+          if (link) {
+            link = link.replace(/^https?:\/\//, '');
+          }
 
           const origin = "one2car";
 
@@ -164,6 +170,7 @@ async function scrape() {
             mileage: mileage ? mileage.toString() : null,
             price: price ? price.toString() : null,
             location: location ? location.toString() : null,
+            link: link ? link.toString() : null,
             origin: origin.toString(),
             date: date.toString(),
           });

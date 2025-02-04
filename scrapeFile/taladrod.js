@@ -36,7 +36,7 @@ function delay(ms) {
   let retryCount = 0;
   let carCount = 0;
   let failedCids = [];
-  const maxCars = 20; //Infinity
+  const maxCars = 100; //Infinity
 
   const dataDir = path.join(__dirname, '..', 'data'); // แก้ไขเส้นทางนี้
   if (!fs.existsSync(dataDir)) {
@@ -110,6 +110,7 @@ function delay(ms) {
 
         const origin = "taladrod";
         const date = new Date().toISOString();
+        const link = window.location.href;
 
         return {
           rawData,
@@ -121,6 +122,7 @@ function delay(ms) {
           mileage,
           price,
           location,
+          link,
           origin,
           date,
         };
@@ -133,7 +135,7 @@ function delay(ms) {
       writeStream.write(JSON.stringify(carData, null, 2));
 
       carCount++;
-      process.stdout.write(`\rดึงข้อมูลรถไปแล้ว ${carCount} คัน`);
+      process.stdout.write(`\r⭕ ดึงข้อมูลรถไปแล้ว ${carCount} คัน`);
 
       skippedCids = 0;
       consecutiveSkippedCids = 0;
@@ -160,10 +162,10 @@ function delay(ms) {
   await browser.close();
   await prisma.$disconnect();
 
-  console.log(`\nจำนวนรายการที่ดึงข้อมูลไม่สำเร็จ: ${failedCids.length}`);
+  console.log(`\n❌ จำนวนรายการที่ดึงข้อมูลไม่สำเร็จ: ${failedCids.length}`);
   if (failedCids.length > 0) {
-    console.log(`รายการ cid ที่ดึงข้อมูลไม่สำเร็จและถูกข้ามไป: ${failedCids.join(", ")}`);
+    console.log(`❌ รายการ cid ที่ดึงข้อมูลไม่สำเร็จและถูกข้ามไป: ${failedCids.join(", ")}`);
   } else {
-    console.log("รายการ cid ที่ดึงข้อมูลไม่สำเร็จและถูกข้ามไป: 0");
+    console.log("❌ รายการ cid ที่ดึงข้อมูลไม่สำเร็จและถูกข้ามไป: 0");
   }
 })();

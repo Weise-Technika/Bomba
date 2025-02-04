@@ -18,6 +18,7 @@ model TemporaryData {
   mileage   String?  
   price     String? 
   location  String?
+  link      String
   origin    String
   date      DateTime
 }
