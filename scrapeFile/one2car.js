@@ -13,15 +13,15 @@ async function scrape() {
   const baseURL = "https://www.one2car.com/รถ-สำหรับ-ขาย";
   let currentPage = 1;
   let hasNextPage = true;
-  let failedAttempts = 0; 
-  const failedPages = []; 
-  const outputPath = path.join(__dirname, '..', 'data', 'one2carData.json'); 
-  const maxCars = 10000; 
-  let carCount = 0; 
+  let failedAttempts = 0;
+  const failedPages = [];
+  const outputPath = path.join(__dirname, "..", "data", "one2carData.json");
+  const maxCars = Infinity;
+  let carCount = 0;
 
   // สร้างไดเรกทอรี data หากไม่มีอยู่
-  if (!fs.existsSync(path.join(__dirname, '..', 'data'))) {
-    fs.mkdirSync(path.join(__dirname, '..', 'data'));
+  if (!fs.existsSync(path.join(__dirname, "..", "data"))) {
+    fs.mkdirSync(path.join(__dirname, "..", "data"));
   }
 
   try {
@@ -35,7 +35,7 @@ async function scrape() {
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
     );
 
-    const allData = []; 
+    const allData = [];
 
     while (hasNextPage && carCount < maxCars) {
       const link = `${baseURL}?type=used&page_number=${currentPage}&page_size=26`;
@@ -53,12 +53,22 @@ async function scrape() {
           if (articles.length > 0) {
             break;
           }
-          console.log(`\nลองครั้งที่ ${attempt + 1} ไม่พบข้อมูล, กำลังลองใหม่...`);
+          console.log(
+            `\nลองครั้งที่ ${attempt + 1} ไม่พบข้อมูล, กำลังลองใหม่...`
+          );
         } catch (error) {
-          if (error.name === 'TimeoutError') {
-            console.log(`\nTimeoutError: ลองครั้งที่ ${attempt + 1} ไม่สำเร็จ, กำลังลองใหม่...`);
-          } else if (error.name === 'TargetCloseError') {
-            console.log(`\nTargetCloseError: ลองครั้งที่ ${attempt + 1} ไม่สำเร็จ, กำลังลองใหม่...`);
+          if (error.name === "TimeoutError") {
+            console.log(
+              `\nTimeoutError: ลองครั้งที่ ${
+                attempt + 1
+              } ไม่สำเร็จ, กำลังลองใหม่...`
+            );
+          } else if (error.name === "TargetCloseError") {
+            console.log(
+              `\nTargetCloseError: ลองครั้งที่ ${
+                attempt + 1
+              } ไม่สำเร็จ, กำลังลองใหม่...`
+            );
             await page.close();
             page = await browser.newPage();
             await page.setUserAgent(
@@ -71,9 +81,11 @@ async function scrape() {
       }
 
       if (articles.length === 0) {
-        console.log(`\nไม่มีข้อมูลจากหน้า ${currentPage} หลังจากพยายาม 3 ครั้ง`);
-        failedPages.push(currentPage); 
-        failedAttempts += 1; 
+        console.log(
+          `\nไม่มีข้อมูลจากหน้า ${currentPage} หลังจากพยายาม 3 ครั้ง`
+        );
+        failedPages.push(currentPage);
+        failedAttempts += 1;
 
         if (failedAttempts >= 3) {
           hasNextPage = false;
@@ -139,9 +151,12 @@ async function scrape() {
             }
           }
 
-          let priceElement = article.querySelector(".listing__price .weight--semibold") ||
-                             article.querySelector(".listing__price.delta.weight--bold") ||
-                             article.querySelector(".listing__price .hot-deal__price .weight--semibold");
+          let priceElement =
+            article.querySelector(".listing__price .weight--semibold") ||
+            article.querySelector(".listing__price.delta.weight--bold") ||
+            article.querySelector(
+              ".listing__price .hot-deal__price .weight--semibold"
+            );
           let price = priceElement ? priceElement.textContent.trim() : null;
 
           if (price) {
@@ -149,11 +164,13 @@ async function scrape() {
           }
 
           const location =
-            article.querySelector(".item.push-quarter--ends .icon--location")?.parentElement?.textContent?.trim() || null;
+            article
+              .querySelector(".item.push-quarter--ends .icon--location")
+              ?.parentElement?.textContent?.trim() || null;
 
           let link = article.querySelector("a.listing__overlay")?.href || null;
           if (link) {
-            link = link.replace(/^https?:\/\//, '');
+            link = link.replace(/^https?:\/\//, "");
           }
 
           const origin = "one2car";
@@ -180,13 +197,13 @@ async function scrape() {
 
       // เพิ่มข้อมูลใน allData
       allData.push(...data);
-      carCount += data.length; // เพิ่มจำนวนข้อมูลที่ดึงได้
+      carCount += data.length;
 
       // เขียนข้อมูลลงไฟล์ JSON
       try {
-        fs.writeFileSync(outputPath, JSON.stringify(allData, null, 2));        
+        fs.writeFileSync(outputPath, JSON.stringify(allData, null, 2));
       } catch (error) {
-        console.error('❌ บันทึกไฟล์ล้มเหลว:', error.message);
+        console.error("❌ บันทึกไฟล์ล้มเหลว:", error.message);
       }
 
       currentPage += 1;
@@ -195,19 +212,19 @@ async function scrape() {
 
     await browser.close();
 
-    console.log(`\nดึงข้อมูลเสร็จสิ้น one2car ได้ข้อมูลรถ ${carCount} คัน`);    
+    console.log(`\nดึงข้อมูลเสร็จสิ้น one2car ได้ข้อมูลรถ ${carCount} คัน`);
     if (failedPages.length > 0) {
       console.log(`หน้าที่ดึงข้อมูลไม่ได้: ${failedPages.join(", ")}`);
     }
 
-    // บันทึกข้อมูลลงฐานข้อมูล
+    // บันทึกข้อมูลลงไฟล์ json
     try {
       await prisma.temporaryData.createMany({
         data: allData,
       });
-      console.log('⭕ ข้อมูลถูกบันทึกลงไฟล์ json');
+      console.log("⭕ ข้อมูลถูกบันทึกลงไฟล์ json");
     } catch (error) {
-      console.error('❌ บันทึกข้อมูลลงฐานข้อมูลล้มเหลว:', error.message);
+      console.error("❌ บันทึกข้อมูลลงไฟล์ json ล้มเหลว:", error.message);
     }
   } catch (error) {
     console.error("\nError during scraping:", error);

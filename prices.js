@@ -2,13 +2,18 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function summarizePrices(brand, serie, section ) {
+async function summarizePrices(brand, serie, section) {
+  if (!brand || !serie) {
+    console.error("กรุณาระบุ brand และ serie");
+    return;
+  }
+
   try {
     const cars = await prisma.temporaryData.findMany({
       where: {
         brand,
         serie,
-        section,
+        ...(section && { section }),
       },
       select: {
         price: true,
@@ -38,7 +43,7 @@ async function summarizePrices(brand, serie, section ) {
         ...car,
         price: car.price ? parseFloat(car.price.toString().replace(/,/g, "")) : NaN,
       }))
-      .filter(car => !isNaN(car.price) && car.price > 0); 
+      .filter(car => !isNaN(car.price) && car.price > 0);
 
     if (prices.length === 0) {
       console.log("ไม่พบข้อมูลราคาที่ถูกต้อง");
@@ -49,7 +54,9 @@ async function summarizePrices(brand, serie, section ) {
     const minPriceCar = prices.reduce((min, car) => (car.price < min.price ? car : min), prices[0]);
     const maxPriceCar = prices.reduce((max, car) => (car.price > max.price ? car : max), prices[0]);
     const totalSum = prices.reduce((sum, car) => sum + car.price, 0);
-    const avgPrice = totalSum / prices.length;
+    let avgPrice = totalSum / prices.length;
+
+    avgPrice = Math.round(avgPrice / 1000) * 1000;
 
     // แสดงผลข้อมูล
     console.log(`จำนวนรถยนต์ที่ใช้ในการคำนวณ: ${prices.length} คัน`);
@@ -64,5 +71,4 @@ async function summarizePrices(brand, serie, section ) {
 }
 
 // เรียกใช้งานฟังก์ชัน
-summarizePrices("Honda", "Civic", "1.8 FCEL i-VTEC Sedan", "16-20");
-// Honda,Civic,1.8 FCEL i-VTEC Sedan,16-20  จำนวน: 59
+summarizePrices("Toyota", "Corolla Altis", "1.6 G Sedan");

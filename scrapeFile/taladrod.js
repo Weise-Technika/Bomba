@@ -38,7 +38,7 @@ function delay(ms) {
   let failedCids = [];
   const maxCars = 100; //Infinity
 
-  const dataDir = path.join(__dirname, '..', 'data'); // แก้ไขเส้นทางนี้
+  const dataDir = path.join(__dirname, '..', 'data');
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir);
   }
