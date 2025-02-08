@@ -1,11 +1,11 @@
-import express from "express";
-import { PrismaClient } from "@prisma/client";
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
 router.post("/Avg-prices", async (req, res) => {
-  const { brand, serie, section, mileage } = req.body;
+  const { brand, serie, section, mileage, year } = req.body;
 
   if (!brand || !serie) {
     return res.status(400).json({ error: "กรุณาระบุ brand และ serie" });
@@ -17,6 +17,7 @@ router.post("/Avg-prices", async (req, res) => {
         brand,
         serie,
         ...(section && { section: { contains: section } }),
+        ...(year && { year: year.toString() }),
       },
       select: {
         price: true,
