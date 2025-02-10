@@ -148,54 +148,64 @@ router.get("/", async (req, res) => {
     console.log("✅ คลิก dropdown ยี่ห้อรถสำเร็จ");
     await delay(250);
 
-    // 📌 5️⃣ เลือก "Toyota"
-    await page.waitForSelector("li.multiselect__element");
-    await delay(250);
-    const options3 = await page.$$("li.multiselect__element");
+    // 📌 5️⃣ ดึงข้อมูลรุ่นของทุกยี่ห้อ
+    const allModels = {};
+    for (const brand of brands) {
+      // เลือกยี่ห้อรถ
+      await page.waitForSelector("li.multiselect__element");
+      await delay(250);
+      const options3 = await page.$$("li.multiselect__element");
 
-    let clicked3 = false;
-    for (let option of options3) {
-      let text = await option.evaluate((el) => el.innerText);
-      if (text.includes("Toyota")) {
-        await option.click();
-        clicked3 = true;
-        console.log('✅ เลือก "Toyota" สำเร็จ');
-        break;
+      let clicked3 = false;
+      for (let option of options3) {
+        let text = await option.evaluate((el) => el.innerText);
+        if (text.includes(brand)) {
+          await option.click();
+          clicked3 = true;
+          console.log(`✅ เลือก "${brand}" สำเร็จ`);
+          break;
+        }
       }
-    }
 
-    if (!clicked3) {
-      console.log('❌ ไม่พบตัวเลือก "Toyota"');
-      throw new Error("❌ ไม่สามารถเลือก 'Toyota'");
-    }
-    await delay(250);
+      if (!clicked3) {
+        console.log(`❌ ไม่พบตัวเลือก "${brand}"`);
+        throw new Error(`❌ ไม่สามารถเลือก '${brand}'`);
+      }
+      await delay(250);
 
-    // 📌 6️⃣ คลิก dropdown "เลือกรุ่น"
-    await page.waitForSelector("span.multiselect__placeholder");
-    await page.click("span.multiselect__placeholder");
-    console.log("✅ คลิก dropdown เลือกรุ่นสำเร็จ");
-    await delay(250);
+      // คลิก dropdown "เลือกรุ่น"
+      await page.waitForSelector("span.multiselect__placeholder");
+      await page.click("span.multiselect__placeholder");
+      console.log(`✅ คลิก dropdown เลือกรุ่นของ ${brand} สำเร็จ`);
+      await delay(250);
 
-    // 📌 7️⃣ ดึงข้อมูลรุ่นของ Toyota
+      // ดึงข้อมูลรุ่นของยี่ห้อ
+      const models = await page.evaluate(() => {
+        let modelOptions = Array.from(
+          document.querySelectorAll(
+            'div[data-test="model-dropdown"] li.multiselect__element .option-box span'
+          )
+        );
+        return modelOptions.map((option) => option.innerText.trim());
+      });
 
-    const models = await page.evaluate(() => {
-      let modelOptions = Array.from(
-        document.querySelectorAll(
-          'div[data-test="model-dropdown"] li.multiselect__element .option-box span'
-        )
+      console.log(`✅ ดึงข้อมูล Models ของ ${brand} สำเร็จ!`, models);
+      allModels[brand] = models;
+
+      // คลิก dropdown "ยี่ห้อรถ" ใหม่อีกครั้ง
+      await page.waitForSelector(
+        'div[data-test="brand-dropdown"] .multiselect__select'
       );
-      return modelOptions.map((option) => option.innerText.trim());
-    });
-
-    console.log("✅ ดึงข้อมูล Models สำเร็จ!:", models);
+      await page.click('div[data-test="brand-dropdown"] .multiselect__select');
+      console.log("✅ คลิก dropdown ยี่ห้อรถสำเร็จ");
+      await delay(250);
+    }
 
     // อ่านข้อมูลจากไฟล์ JSON เดิม
     const existingData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
 
-    // เพิ่มข้อมูลรุ่นของ Toyota ลงในข้อมูลเดิม
-    existingData.models = {
-      Toyota: models,
-    };
+    // เพิ่มข้อมูลรุ่นของทุกยี่ห้อลงในข้อมูลเดิม
+    existingData.models = allModels;
 
     // เขียนข้อมูลลงไฟล์ JSON
     fs.writeFileSync(filePath, JSON.stringify(existingData, null, 2), "utf-8");
@@ -205,7 +215,7 @@ router.get("/", async (req, res) => {
     res.send({
       message: "✅ ดึงข้อมูล Brands และ Models สำเร็จ!",
       brands: brands,
-      models: models,
+      models: allModels,
     });
   } catch (error) {
     console.error("❌ Error executing Puppeteer script:", error);
